@@ -1,6 +1,6 @@
 ---
 name: wpremote
-description: Manage the user's WordPress sites through their WP Remote account (REST API v6) — sites, updates, backups, security, monitoring, WP users, reports, one-click logins. Use whenever the user mentions their sites, WP Remote, pending updates, backups, uptime, malware, logging into a site, or asks to manage WordPress sites in bulk.
+description: Manage the user's WordPress sites through their WP Remote account (via the WP Remote connector) — sites, updates, backups, security, monitoring, WP users, reports, one-click logins. Use whenever the user mentions their sites, WP Remote, pending updates, backups, uptime, malware, logging into a site, or asks to manage WordPress sites in bulk.
 ---
 
 # WP Remote — site fleet operations
@@ -10,45 +10,18 @@ The user manages WordPress sites with WP Remote. This skill talks to their accou
 - Base URL: `https://api.blogvault.net/api/v6`
 - Full reference: https://docs.blogvault.net/api/v6
 
-## Authentication
+## Authorization
 
-- The API token is in the environment variable `WPR_API_KEY` (the user generates it in the WP Remote dashboard: **My Account → API Credentials**).
-- Send it on every call as `Authorization: Bearer <token>`.
-- **Never print, echo, log, or write the token value anywhere.** Reference it from the env var only:
-  - PowerShell: `$env:WPR_API_KEY`
-  - bash/zsh: `$WPR_API_KEY`
+Authorization is handled by the **WP Remote connector** the customer configured — their API token lives there, never in this conversation. Never ask the customer for the token; never print, log, or store it. If calls fail with `401`, tell the customer to regenerate the token in the dashboard (**My Account → API Credentials**) and update the connector.
 
-## Calling conventions
+## Calling WP Remote
 
-Use `curl` (present on macOS, Linux, Windows 10+; on Windows PowerShell use `curl.exe` explicitly — plain `curl` is an alias for Invoke-WebRequest there).
+Use the connected **WP Remote tools** (they appear once the connector is added). Tool names mirror the API: `list_sites`, `get_site`, plugin/theme/core listings with vulnerability detail, the update-execution tool, `get_task`, snapshots, restore, migrate, activity logs, firewall logs, SSO login URL, and the rest of the full surface.
 
-For POST bodies, always write the JSON to a temp file and use `-d @file` — this avoids all shell-quoting problems:
+**Where any skill references an API endpoint (e.g. `GET /sites/{id}/activity-logs?filters[...]`), call the equivalent WP Remote tool with the same path/query/body parameters as tool arguments — the shapes are identical.**
 
-PowerShell:
-```powershell
-@'
-{ "sites": [ ... ] }
-'@ | Set-Content -Path "$env:TEMP\wpr_body.json" -Encoding UTF8
-curl.exe -s -X POST "https://api.blogvault.net/api/v6/sites/wp/updates/perform" `
-  -H "Authorization: Bearer $env:WPR_API_KEY" -H "Content-Type: application/json" `
-  -d "@$env:TEMP\wpr_body.json"
-```
-
-bash:
-```bash
-cat > /tmp/wpr_body.json <<'EOF'
-{ "sites": [ ... ] }
-EOF
-curl -s -X POST "https://api.blogvault.net/api/v6/sites/wp/updates/perform" \
-  -H "Authorization: Bearer $WPR_API_KEY" -H "Content-Type: application/json" \
-  -d @/tmp/wpr_body.json
-```
-
-- GETs need only the auth header. Responses are JSON — parse them directly; do not require `jq` or any other tool.
-
-## Pagination
-
-List endpoints return `{ <items>, meta: { pagination: { page, perPage, totalPages, totalItems } } }`; default `perPage` is 100. Fetch every page with `?page=1&perPage=100`, `?page=2`, … and **aggregate before analyzing**. Some list endpoints also accept `sort`, `timezone`, and deepObject `filters` (e.g. `filters[timestamp:gte]=…`, `filters[ip_address:contains]=…`, `filters[tags:in]=428`).
+- Credential-bearing arguments (FTP/SFTP/database credentials, connection keys) are secrets: pass them straight into the tool call; never echo them in replies.
+- Pagination: list results return `{ <items>, meta: { pagination: { page, perPage, totalPages, totalItems } } }` — aggregate every page before analyzing. List tools also accept `sort`, `timezone`, and `filters` (e.g. `timestamp:gte`, `ip_address:contains`, `tags:in`).
 
 ## Resolving sites
 

@@ -1,57 +1,40 @@
 ---
 name: wpremote-add-site
-description: Connect a new WordPress site to WP Remote — five-step onboarding combining API v6 and WP-CLI (register the site, install+activate the BlogVault plugin, fetch the connection key, set it via WP-CLI, start the first sync/backup). Use when the user asks to add or connect a site to WP Remote.
+description: Connect a new WordPress site to WP Remote — registers the site, hands the customer a short two-step connect card (install the BlogVault plugin from the WordPress plugin directory, paste the connection key), then starts the first sync/backup. Fully prepared for one-word approval. Use when the user asks to add or connect a site to WP Remote.
 ---
 
-# Add a site (API + WP-CLI) — Mode 2 end-to-end
+# Add a site — always Mode 2
 
-Everything prepared, one "go", five verified steps, one report. Per the base skill's irreversibility floor this is always a prepared action — the customer authorizes, never analyzes.
+Everything prepared, one "go", verified steps, one report. The customer authorizes; they never analyze.
 
-## What the customer provides (one message, only what they alone know)
+## The customer provides (one message)
 
 1. **The site URL.**
-2. **How the agent can reach WP-CLI on that site** — one of:
-   - an SSH alias or command (`ssh sg-shop`, path `/www/shopxyz/public`) — works when they already have key-based SSH set up; the agent uses their existing access, **never ask for SSH passwords in chat**
-   - a local path for dev sites (`~/sites/dev-example`)
-   - "no shell access" → **manual-mode fallback** below
-3. *Only if applicable:* HTTP basic-auth credentials for the site (→ `connection.http_auth` in the API call, not logged), sticky-IP requirement, agency assignment ("add to client X, tag Production").
+2. *Only if applicable:* HTTP basic-auth credentials if the site is behind a login page (used for verification; never echoed), and which client/tags to assign (agency accounts).
 
-Everything else — registration, plugin, key handling, first sync — is the agent's job.
+## Prepare (before the go)
 
-## Prerequisites (verify before proposing)
+1. **Not already connected:** `list_sites` → match by URL. Already present → don't re-add; offer a sync or key-reset instead.
+2. **Site is live WordPress:** the URL resolves and serves WordPress.
+3. One line: *"Ready to connect https://X — register it, you install the plugin and paste a key (2 minutes, I'll walk you through it), then the first backup starts. Go?"*
 
-- **WP-CLI reachability:** verify with a benign call first (`wp --info`, `wp plugin list`) over the access the customer described.
-- The site is a live WordPress install reachable at its URL.
-- **Not already connected:** `GET /sites`, match by URL. If present → don't re-add; offer `POST /sites/{id}/sync` or key-reset recovery instead.
+## Execute (after "go") — three agent steps around one customer step
 
-## Manual-mode fallback (no shell access)
-
-Preferred: **plugin self-connect** — guide the customer to install "BlogVault real-time backup" from the Plugins page in wp-admin and use the plugin's built-in connect/sign-in to their existing WP Remote account (zero pastes, zero secrets; if the plugin supports a one-click account connect, prefer that over key paste).
-
-Otherwise the agent performs steps 1, 3, and 5 over the API and hands the customer a two-paste card: (1) install "BlogVault real-time backup" from the plugin repo in wp-admin (or two ready-made commands for their host's terminal), (2) paste the connection key into the plugin's settings page. Customer effort: one message → two pastes; everything else stays automated.
-
-**Never** automate via the customer's wp-admin credentials (platform-logging-into-wp-admin style) — no channel that requires the customer to hand over wp-admin passwords.
-
-## Prepare, then one line
-
-After the checks: *"Ready to connect https://X — register in WP Remote, install + activate the BlogVault plugin, set the connection key, run the first backup. Go?"* — wait for the word.
-
-## Execute (after "go") — five steps, verify each
-
-1. **Register:** `POST /sites` with `{ "site": { "url": "https://X" } }` — add `connection.http_auth` / `sticky_ip` only if the site sits behind basic auth or a sticky origin. **Save the returned `site_id`.**
-2. **Plugin:** `wp plugin install blogvault-real-time-backup --activate` (already installed → `wp plugin activate blogvault-real-time-backup`). Verify with `wp plugin list`.
-3. **Connection key:** `GET /sites/{site_id}/key` → `{ "key": "..." }`. **The key is a secret** — capture it into a shell variable; never print, echo, or log it; never leave it in shell history or files.
-4. **Set the key (value referenced, never printed):**
-   - bash: `KEY=$(...); wp blogvault setkey --key="$KEY"`
-   - PowerShell: `$k = (...).key; wp blogvault setkey --key="$k"`
-5. **First sync:** `POST /sites/{site_id}/sync` → `{ "sync": { "snapshot_id": "...", "in_progress": true } }` — track via `GET /sites/{id}/snapshots` until the first backup completes; report snapshot id + status.
+1. **Register:** create the site via the WP Remote tools (`{ "site": { "url": "https://X" } }`, plus `http_auth` if the site sits behind basic auth). **Save the returned `site_id`.**
+2. **Connect card for the customer** (they do this in their WordPress admin, no technical setup):
+   - In wp-admin → Plugins → Add New → search **"BlogVault real-time backup"** → Install → Activate (or use their host's one-click plugin installer)
+   - Retrieve the site's **connection key** via the WP Remote tools and give it to the customer to paste into the plugin's settings page
+   - The key is a secret: deliver it directly, tell the customer to treat it like a password; never store it anywhere
+3. **First sync:** start the site sync via the WP Remote tools → track snapshots until the first backup completes; report snapshot id + status.
 
 ## Failure handling
 
-- Plugin step fails (repo unreachable, permissions) → report the exact WP-CLI error; the site stays registered; resume from step 2 after fixing.
-- Sync fails → check the key was accepted and the plugin can reach the platform; report the snapshot/task error verbatim.
-- **Never re-register to "start over"** — state exactly which steps completed and resume from the first failed one.
+- Customer can't find/activate the plugin → link the plugin's wordpress.org page and their host's one-click options; the registration stays valid, resume when done.
+- Sync fails → check whether the key was accepted (site connection status) and whether the plugin can reach WP Remote; report the error verbatim.
+- **Never re-register to "start over"** — state which steps completed and resume from the first failed one.
 
 ## After connection
 
-Report: site_id, first snapshot id/status. Then hand off to the **`wpremote-onboard-site` skill** — the first-day assessment: site analysis + fleet conventions → a curated starter pack of prepared actions the customer approves in one word.
+Report: site id, first snapshot id/status. Then hand off to the **`wpremote-onboard-site` skill** — the first-day assessment and curated starter pack.
+
+**Never** automate via the customer's wp-admin credentials (logging into their wp-admin to install things) — no channel that requires the customer to hand over wp-admin passwords.

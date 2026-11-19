@@ -45,7 +45,7 @@ For "spin up a copy to test on" — that's the staging skill (`POST /staging-sit
 
 ## 4. Execute and track
 
-- `POST /sites/{site_id}/backups/{snapshot_id}/migrate` — body via temp file (contains credentials: never print, delete after). Envelope `{ migration: { destination_url, type, scope, connection?, options } }`.
+- Run the migration tool with arguments `{ migration: { destination_url, type, scope, connection?, options } }`. Credentials pass directly as tool arguments — never echo them in replies.
 - Poll `GET /tasks/{id}`; migrations are long — progress on request.
 - **Post-migration:**
   - internal → verify destination (`GET /sites/{dest_id}` sync status), report.

@@ -1,81 +1,34 @@
 # WP Remote AI — your site professional
 
-Turn Claude Code or Codex into a hired professional for your WordPress sites. It handles routine work safely on its own — updates with automatic backups, change-verification, and rollback if anything breaks — and brings you fully-prepared decisions for the things that need you. One word from you executes any of them.
+Turn Claude or Codex into a hired professional for your WordPress sites. It handles routine work safely on its own — updates with automatic backups, change-verification, and rollback if anything breaks — and brings you fully-prepared decisions for the things that need you. One word from you executes any of them.
 
 You never review permission slips — you review outcomes. Nothing destructive (restore, delete, credential changes, anything costing money) runs without your explicit one-word approval, and every update is backed up first.
 
-## Setup — 2 minutes
+## Setup — 2 minutes, no terminal
 
 ### Step 1 · Get your API token
 
-WP Remote dashboard → three-dot menu (top right) → **My Account** → **API Credentials** → **Generate API Token**. Copy it (shown only once).
+WP Remote dashboard → three-dot menu (top right) → **My Account** → **API Credentials** → **Generate API Token**. Copy it — it's shown only once.
 
-Set it as an environment variable:
+### Step 2 · Connect WP Remote (the hands)
 
-**Windows (PowerShell):**
-```powershell
-[Environment]::SetEnvironmentVariable('WPR_API_KEY','PASTE_YOUR_TOKEN','User')
-```
-…then close and reopen your terminal.
+**Claude (claude.ai or the desktop app):**
+Settings → **Connectors** → Add custom connector → name it **WP Remote**, URL `https://mcp.blogvault.net/mcp`, authentication **API key / Bearer** → paste your token → Connect.
 
-**macOS / Linux:**
-```bash
-echo 'export WPR_API_KEY="PASTE_YOUR_TOKEN"' >> ~/.zshrc && source ~/.zshrc
-```
+**Codex (web or desktop):**
+Settings → **Connectors** → Add connector / MCP server → same URL → Bearer token → paste your token.
 
-### Step 2 · Install the skills
+### Step 3 · Add the professional brain (the skills)
 
-**Claude Code — macOS / Linux:**
-```bash
-git clone https://github.com/bv-aman/wpr-ai.git /tmp/wpr-ai \
-  && mkdir -p ~/.claude/skills \
-  && cp -r /tmp/wpr-ai/skills/* ~/.claude/skills/
-```
+**Claude:** Settings → **Capabilities** → **Skills** → upload **`wpr-skills.zip`** from this repo → enable the WP Remote skills. (If your plan doesn't offer Skills upload, the connector alone already gives full site control — the skills add the professional judgment.)
 
-**Claude Code — Windows (PowerShell):**
-```powershell
-git clone https://github.com/bv-aman/wpr-ai.git $env:TEMP\wpr-ai
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills" | Out-Null
-Copy-Item -Recurse -Force $env:TEMP\wpr-ai\skills\* "$env:USERPROFILE\.claude\skills\"
-```
+**Codex web:** paste the contents of **`codex-instructions.md`** into Settings → custom instructions.
 
-**Codex (any OS):** after cloning as above, append the bundled skills file to your AGENTS.md:
+**Codex desktop / IDE:** copy **`codex-skills.md`** into your project as `AGENTS.md`.
 
-```bash
-mkdir -p ~/.codex && cat /tmp/wpr-ai/codex-skills.md >> ~/.codex/AGENTS.md
-```
-```powershell
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.codex" | Out-Null
-Add-Content -Path "$env:USERPROFILE\.codex\AGENTS.md" -Value (Get-Content $env:TEMP\wpr-ai\codex-skills.md -Raw)
-```
+### Done — ask your AI
 
-### Step 3 · (Optional, recommended) Connect the official WP Remote MCP
-
-First-class WP Remote tools for your AI — 60 extra seconds, same token:
-
-```bash
-export WPREMOTE_MCP_TOKEN="PASTE_YOUR_TOKEN"    # same token as Step 1
-```
-
-**Claude Code:**
-```bash
-claude mcp add --transport http --scope user \
-  --header "Authorization: Bearer ${WPREMOTE_MCP_TOKEN}" \
-  wpremote https://mcp.blogvault.net/mcp
-```
-
-**Codex:**
-```bash
-codex mcp add wpremote \
-  --url https://mcp.blogvault.net/mcp \
-  --bearer-token-env-var WPREMOTE_MCP_TOKEN
-```
-
-**Claude Desktop:** Settings → Connectors → Add custom connector → URL `https://mcp.blogvault.net/mcp` → API-key/Bearer auth → paste your token.
-
-### Done — verify
-
-Open your AI tool and ask: **"Is the WP Remote setup connected and working?"**
+> **"Is the WP Remote setup connected and working?"**
 
 ## What to say
 
@@ -91,20 +44,19 @@ Open your AI tool and ask: **"Is the WP Remote setup connected and working?"**
 | `The IP <ip> was blocked on <site>. Should I whitelist it?` | Full traffic analysis → evidence-backed verdict |
 | `Give me this week's health report.` | Uptime, updates, vulnerabilities, malware, backups, SSL — ranked attention list |
 | `Enable visual monitoring on <site>.` | Daily screenshot checks; changes correlated to what caused them |
-| `Add <url> to WP Remote.` | Five-step connect (register → plugin → key → first backup), prepared as one go |
+| `Add <url> to WP Remote.` | Register + a 2-minute connect card (plugin + key) + first backup |
 | `Log me into <site>.` | One-click WordPress login link |
 
 ## What's in this repo
 
-- `skills/` — 10 skills (updates · restore · migrate · breakage triage · firewall IP analysis · health report · visual monitoring · add-site · onboarding · foundation)
-- `codex-skills.md` — the same skills, pre-merged for Codex's AGENTS.md
-- This README
+- `wpr-skills.zip` — the 10 skills, ready to upload to Claude
+- `codex-instructions.md` — condensed version to paste into Codex web
+- `codex-skills.md` — full version for Codex desktop/IDE projects (`AGENTS.md`)
+- `skills/` — the individual skills (same content as the zip)
 
 ## Safety, always on
 
 - Backup before **and** after every update; visual change-check + automated health test; auto-rollback if a site breaks
 - Fleet changes roll out in small verified waves — never everything at once
 - Locked plugins/themes always respected; your token and credentials are never printed or logged
-- With or without the MCP, the skills work — API directly, or first-class tools if MCP is connected
-
-*Note: while this repo is private, `git clone` requires access. Once public, the same commands work for anyone, and a no-git download option can be added.*
+- Works through the official WP Remote MCP — your token stays in your connector settings

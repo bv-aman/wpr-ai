@@ -43,7 +43,7 @@ Already-current targets: listed as "current", no action, no noise.
 ## Execute — verified waves
 
 1. Sort sites least-critical first; wave 1 = 1–3 non-critical sites.
-2. `POST /sites/wp/updates/perform` per wave — `options: { "backup": true, "visual_regression": true }`, `override_lock: false`, `target_version` = the patched version for vulnerability-driven items, or the customer's named version.
+2. Run the site-update tool per wave, one entry per site — `options: { "backup": true, "visual_regression": true }`, `override_lock: false`, `target_version` = the patched version for vulnerability-driven items, or the customer's named version.
 3. After each task, inspect `details.sites[].steps`: `wp_test` failed or visual regression **>10%** → restore the pre-update snapshot (`POST /sites/{id}/backups/{snapshot_id}/restore`), freeze the item fleet-wide, notify. **2–10%** → hold the item everywhere + attach the diff screenshots. **≤2%** → pass.
 4. **Stop-on-repeat:** the same item breaking twice → out of all remaining waves, escalated.
 5. Poll ~10 s cadence; respect the 200 req/min budget.

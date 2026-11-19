@@ -53,7 +53,7 @@ Every restore request, known or novel, resolves through these five steps:
 
 ## Execute and track
 
-- `POST /sites/{site_id}/backups/{snapshot_id}/restore` — body via temp file (credentials possible: never print, delete after). Envelope `{ restore: { scope, connection?, options } }`.
+- Run the restore tool for that snapshot with arguments `{ restore: { scope, connection?, options } }`. Credentials pass directly as tool arguments — never echo them in replies.
 - Poll `GET /tasks/{id}` — progress on request. Verify `GET /sites/{id}` after. Offer a visual check (visual-monitoring skill refresh) for anything user-visible.
 
 ## Failure handling
