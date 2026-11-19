@@ -1,0 +1,16 @@
+# Secrets & local config
+.env
+.env.*
+config.local.json
+*.pem
+*.key
+
+# Scratch & build
+tmp/
+node_modules/
+dist/
+build/
+
+# OS noise
+.DS_Store
+Thumbs.db
